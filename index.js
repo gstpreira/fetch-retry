@@ -1,6 +1,6 @@
-'use strict';
-require('isomorphic-fetch');
-require('es6-promise').polyfill();
+"use strict";
+require("isomorphic-fetch");
+require("es6-promise").polyfill();
 
 module.exports = function(url, options) {
   var retries = 3;
@@ -11,23 +11,31 @@ module.exports = function(url, options) {
     if (isPositiveInteger(options.retries)) {
       retries = options.retries;
     } else {
-      throw new ArgumentError('retries must be a positive integer');
+      throw new ArgumentError("retries must be a positive integer");
     }
   }
 
   if (options && options.retryDelay !== undefined) {
-    if (isPositiveInteger(options.retryDelay) || (typeof options.retryDelay === 'function')) {
+    if (
+      isPositiveInteger(options.retryDelay) ||
+      typeof options.retryDelay === "function"
+    ) {
       retryDelay = options.retryDelay;
     } else {
-      throw new ArgumentError('retryDelay must be a positive integer or a function returning a positive integer');
+      throw new ArgumentError(
+        "retryDelay must be a positive integer or a function returning a positive integer"
+      );
     }
   }
 
   if (options && options.retryOn) {
-    if (Array.isArray(options.retryOn) || (typeof options.retryOn === 'function')) {
+    if (
+      Array.isArray(options.retryOn) ||
+      typeof options.retryOn === "function"
+    ) {
       retryOn = options.retryOn;
     } else {
-      throw new ArgumentError('retryOn property expects an array or function');
+      throw new ArgumentError("retryOn property expects an array or function");
     }
   }
 
@@ -35,20 +43,26 @@ module.exports = function(url, options) {
     var wrappedFetch = function(attempt) {
       fetch(url, options)
         .then(function(response) {
-          if (Array.isArray(retryOn) && retryOn.indexOf(response.status) === -1) {
+          if (
+            Array.isArray(retryOn) &&
+            retryOn.indexOf(response.status) === -1
+          ) {
             resolve(response);
-          } else if (typeof retryOn === 'function') {
-            var retryOnRes = retryOn(attempt, null, {...response});
-            if (typeof retryOnRes === 'boolean' && retryOnRes) {
+          } else if (typeof retryOn === "function") {
+            var retryOnRes = retryOn(attempt, null, response);
+            if (typeof retryOnRes === "boolean" && retryOnRes) {
               retry(attempt, null, response);
-            } else if (typeof retryOnRes === 'object' && typeof retryOnRes.then === 'function') {
-              retryOnRes.then((res) => {
-                if(res){
+            } else if (
+              typeof retryOnRes === "object" &&
+              typeof retryOnRes.then === "function"
+            ) {
+              retryOnRes.then(res => {
+                if (res) {
                   retry(attempt, null, response);
                 } else {
                   resolve(response);
                 }
-              })
+              });
             } else {
               resolve(response);
             }
@@ -61,7 +75,7 @@ module.exports = function(url, options) {
           }
         })
         .catch(function(error) {
-          if (typeof retryOn === 'function') {
+          if (typeof retryOn === "function") {
             if (retryOn(attempt, error, null)) {
               retry(attempt, error, null);
             } else {
@@ -76,8 +90,10 @@ module.exports = function(url, options) {
     };
 
     function retry(attempt, error, response) {
-      var delay = (typeof retryDelay === 'function') ?
-        retryDelay(attempt, error, response) : retryDelay;
+      var delay =
+        typeof retryDelay === "function"
+          ? retryDelay(attempt, error, response)
+          : retryDelay;
       setTimeout(function() {
         wrappedFetch(++attempt);
       }, delay);
@@ -92,6 +108,6 @@ function isPositiveInteger(value) {
 }
 
 function ArgumentError(message) {
-  this.name = 'ArgumentError';
+  this.name = "ArgumentError";
   this.message = message;
 }
